@@ -1,5 +1,4 @@
 import { defineEventHandler } from 'h3'
-
 import { fetch } from 'ofetch'
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const response = await fetch(`https://fakerapi.it/api/v2/creditCards?type=${cardType}`, {
+    const response = await fetch(' https://fakerapi.it/api/v2/creditCards?_quantity=25', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -22,12 +21,15 @@ export default defineEventHandler(async (event) => {
     })
     // Parse JSON response
     const data = await response.json()
-
+    console.log('Raw data :', data) // debug
     // Trier les données selon le type de carte donné en paramètres :
-    const filteredCard = data.data.filter((card: {type: string}) => card.type.toLowerCase() === cardType.toLowerCase())
+    const filteredCard = data.data.filter((card: {type: string}) => card.type.trim().toLowerCase() === cardType.trim().toLowerCase()) //  trim() pour enlever les espaces quand le type de cartes possède 2 mots ou +
 
     console.log('Fetched data :', filteredCard)
-    return data
+    return {
+      status: 'success',
+      data: filteredCard
+    }
   } catch (e) {
     /* console.error(e) */
     throw createError(JSON.stringify(
