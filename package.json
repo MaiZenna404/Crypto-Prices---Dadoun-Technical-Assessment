@@ -14,12 +14,16 @@
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@pinia/nuxt": "^0.10.1",
     "@vueuse/core": "^13.0.0",
+    "dotenv": "^16.4.7",
+    "h3": "^1.15.1",
     "nuxt": "^3.16.1",
+    "ofetch": "^1.4.1",
     "pinia": "^3.0.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@types/node": "^22.13.13",
     "typescript": "^5.8.2",
     "vue-tsc": "^2.2.8"
   }
