@@ -50,6 +50,7 @@ onMounted(() => {
         <option value="visa">Visa</option>
         <option value="mastercard">MasterCard</option>
         <option value="american express">American Express</option>
+        <option value="jcb">JCB</option>
       </select>
     </div>
 
@@ -74,6 +75,7 @@ onMounted(() => {
     <div v-else>
       <p>Aucune carte de crédit trouvée.</p>
     </div>
+    <Button label="Verify" />
   </div>
 </template>
 
