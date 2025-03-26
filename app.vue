@@ -1,83 +1,100 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 
-// Define the structure of a credit card
-interface CreditCard {
-  id: number;
-  type: string;
-  number: string;
-  expiration: string;
-  owner: string;
+// Define the structure of the API response
+interface CryptoCurrency {
+  usd: number;
+  eur: number;
+  jpy: number;
 }
 
-// Define the structure of the API response
 interface ApiResponse {
   status: string;
-  data: CreditCard[];
+  data: Record<string, CryptoCurrency>; // The API returns a dynamic object with crypto names as keys
 }
 
 // Reactive variables
-const cardType = ref('visa') // Default card type
-const creditCards = ref<CreditCard[]>([]) // To store the fetched credit card data
+const cryptoType = ref('bitcoin') // Default cryptocurrency
+const cryptoData = ref<CryptoCurrency | null>(null) // To store the fetched cryptocurrency data
 const error = ref<string | null>(null) // To store any error messages
 
 // Fetch Data Request
-
-const fetchDataCreditCards = async () => {
+const fetchCryptoData = async () => {
   try {
-    const { data } = await useFetch<ApiResponse>(`/api/${cardType.value}`)
-    creditCards.value = data.value?.data || []
-  } catch (error) {
-    error.value = (error as Error).message
-    console.error('An error had occurred :', error)
+    console.log('Fetching data for crypto:', cryptoType.value)
+    const { data } = await useFetch<Record<string, CryptoCurrency>>(`/api/${cryptoType.value}`)
+    console.log('Fetched data:', data.value)
+
+    // Extract the data for the selected cryptocurrency
+    cryptoData.value = data.value?.[cryptoType.value] || null
+  } catch (err) {
+    error.value = (err as Error).message
+    console.error('An error occurred:', err)
   }
 }
 
+// Fetch data when the component is mounted
 onMounted(() => {
-  fetchDataCreditCards()
+  fetchCryptoData()
 })
-
 </script>
 
 <template>
   <div>
-    <h1>dadounTest</h1>
+    <h1>Cryptocurrency Prices</h1>
 
-    <!-- Dropdown to select card type -->
+    <!-- Dropdown to select cryptocurrency -->
     <div>
-      <label for="cardType">Select Card Type:</label>
-      <select id="cardType" v-model="cardType" @change="fetchDataCreditCards">
-        <option value="visa">Visa</option>
-        <option value="mastercard">MasterCard</option>
-        <option value="american express">American Express</option>
-        <option value="jcb">JCB</option>
+      <label for="cryptoType">Select Cryptocurrency:</label>
+      <select id="cryptoType" v-model="cryptoType" @change="fetchCryptoData">
+        <option value="bitcoin">Bitcoin</option>
+        <option value="ethereum">Ethereum</option>
       </select>
     </div>
 
     <!-- Display error message if an error occurs -->
     <div v-if="error">
-      <p>Erreur : {{ error }}</p>
+      <p>Error: {{ error }}</p>
     </div>
 
-    <!-- Display the list of credit cards if data is available -->
-    <div v-else-if="creditCards.length > 0">
+    <!-- Display the cryptocurrency data if available -->
+    <div v-else-if="cryptoData">
+      <h2>Prices for {{ cryptoType }}</h2>
       <ul>
-        <li v-for="card in creditCards" :key="card.id">
-          <strong>{{ card.type }}</strong>
-          Number: {{ card.number }}
-          Expiry: {{ card.expiration }}
-          Owner: {{ card.owner }}
-        </li>
+        <li>USD: {{ cryptoData.usd }}</li>
+        <li>EUR: {{ cryptoData.eur }}</li>
+        <li>JPY: {{ cryptoData.jpy }}</li>
       </ul>
     </div>
 
-    <!-- Show a message if no credit cards are found -->
+    <!-- Show a message if no data is found -->
     <div v-else>
-      <p>Aucune carte de crédit trouvée.</p>
+      <p>No data available for the selected cryptocurrency.</p>
     </div>
-    <Button label="Verify" />
   </div>
 </template>
 
-<style lang="css" scoped>
+<style scoped>
+/* Add some basic styling */
+h1 {
+  text-align: center;
+}
+
+label {
+  font-weight: bold;
+}
+
+select {
+  margin: 10px 0;
+  padding: 5px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  margin: 5px 0;
+}
 </style>
