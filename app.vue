@@ -95,7 +95,7 @@ onMounted(() => {
     <div v-if="cryptoInfos">
       <h2>{{ cryptoInfos.name }}</h2>
       <img :src="cryptoInfos.image.small" alt="Crypto Image" />
-      <p>{{ cryptoInfos.description.en }}</p>
+      <p className='text-gray-700 text-base'>{{ cryptoInfos.description.en }}</p>
     </div>
 
  <!-- Display error message if an error occurs -->

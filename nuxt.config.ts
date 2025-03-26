@@ -8,6 +8,6 @@ export default defineNuxtConfig({
     strict: false
   },
 
-  modules: ['@pinia/nuxt'
-  ]
+  modules: ['@pinia/nuxt',
+    '@nuxtjs/tailwindcss']
 })
