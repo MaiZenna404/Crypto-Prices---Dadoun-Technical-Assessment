@@ -1,11 +1,15 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
+// Import PrimeVue components
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Button from 'primevue/button'
+import Chart from 'primevue/chart'
 
 // Define the structure of the API response
 interface CryptoCurrency {
   usd: number
   eur: number
-  jpy: number
 }
 
 interface CryptoInfos {
@@ -29,10 +33,18 @@ interface CryptoInfos {
 }
 
 // Reactive variables
-const cryptoType = ref('bitcoin') // Default cryptocurrency in the handledown
+const cryptoType = ref('bitcoin') // Default cryptocurrency
 const cryptoData = ref<CryptoCurrency | null>(null) // To store the fetched cryptocurrency prices
 const cryptoInfos = ref<CryptoInfos | null>(null) // To store the fetched cryptocurrency information
 const error = ref<string | null>(null) // To store any error messages
+
+// Table data
+const columns = ref([
+  { field: 'currency', header: 'Currency' },
+  { field: 'price', header: 'Price' }
+])
+
+const products = ref([])
 
 // Fetch cryptocurrency prices
 const fetchCryptoData = async () => {
@@ -43,6 +55,14 @@ const fetchCryptoData = async () => {
 
     // Extract the data for the selected cryptocurrency
     cryptoData.value = data.value?.[cryptoType.value] || null
+
+    // Update the products array for the table
+    if (cryptoData.value) {
+      products.value = []
+      for (const [currency, price] of Object.entries(cryptoData.value)) {
+        products.value.push({ currency, price })
+      }
+    }
   } catch (err) {
     error.value = (err as Error).message
     console.error('An error occurred while fetching crypto prices:', err)
@@ -60,12 +80,11 @@ const fetchCryptoInfosData = async () => {
     cryptoInfos.value = data.value || null
   } catch (err) {
     error.value = (err as Error).message
-    // console.error('An error occurred while fetching crypto infos:', err)
+    console.error('An error occurred while fetching crypto infos:', err)
   }
 }
 
-// Charger les données correspondant à la crypto choisie dans le menu déroulant
-// => But : changement dynamique des données à chaque changement de choix
+// Handle dropdown change
 const onCryptoChange = () => {
   fetchCryptoData()
   fetchCryptoInfosData()
@@ -95,32 +114,52 @@ onMounted(() => {
     <div v-if="cryptoInfos">
       <h2>{{ cryptoInfos.name }}</h2>
       <img :src="cryptoInfos.image.small" alt="Crypto Image" />
-      <p className='text-gray-700 text-base'>{{ cryptoInfos.description.en }}</p>
+      <p>{{ cryptoInfos.description.en }}</p>
     </div>
 
- <!-- Display error message if an error occurs -->
+    <!-- Display error message if an error occurs -->
     <div v-else>
       <p>Error: {{ error }}</p>
     </div>
 
     <!-- Display the cryptocurrency data if available -->
-    <div v-if="cryptoData && cryptoData.usd && cryptoData.eur && cryptoData.jpy">
-      <h2>Prices for {{ cryptoType }}</h2>
-      <ul>
-        <li>USD: {{ cryptoData.usd }}</li>
-        <li>EUR: {{ cryptoData.eur }}</li>
-        <li>JPY: {{ cryptoData.jpy }}</li>
-      </ul>
-      <!-- <p>Debug: {{ cryptoData }} is being rendered</p> -->
+    <div v-if="cryptoData && cryptoData.usd && cryptoData.eur">
+      <div>
+        <h2>Prices for {{ cryptoType }}</h2>
+        <DataTable :value="products" striped-rows table-style="min-width: 50rem">
+          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
+        </DataTable>
+      </div>
+      <div>
+        <Chart type="bar"
+               :data="{
+                 labels: ['USD', 'EUR'],
+                 datasets: [
+                   {
+                     label: 'Price',
+                     data: [cryptoData.usd, cryptoData.eur],
+                     backgroundColor: ['#42A5F5', '#66BB6A'],
+                     borderColor: '#42A5F5',
+                     borderWidth: 1,
+                   },
+                 ],
+               }"
+               :options="{
+                 scales: {
+                   y: { beginAtZero: true,
+                        ticks: { stepSize: 200 }
+                   }
+                 }
+               }"
+        /> <br />
+      </div>
     </div>
 
     <!-- Show a message if no data is found -->
     <div v-else>
       <p>No data available for the selected cryptocurrency.</p>
     </div>
-    <Button label="Verify">
-      Click Here
-    </Button>
+    <Button label="Verify" />
   </div>
 </template>
 
@@ -136,7 +175,7 @@ label {
 
 select {
   margin: 10px 0;
-  padding: 5px;
+  padding: 5px
 }
 
 ul {

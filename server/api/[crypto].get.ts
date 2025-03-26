@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   // Fetch Data from API
   const baseURL: string =
-    `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoCurrency}&vs_currencies=usd,eur,jpy`
+    `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoCurrency}&vs_currencies=usd,eur`
   try {
     const response = await fetch(baseURL, {
       method: 'GET',
