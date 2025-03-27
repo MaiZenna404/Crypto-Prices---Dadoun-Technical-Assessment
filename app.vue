@@ -13,30 +13,33 @@ interface CryptoCurrency {
 }
 
 interface CryptoInfos {
-  id: string
   name: string
+  image: {
+    small: string
+  }
   description: {
     en: string
   }
-  image: {
-    thumb: string
-    small: string
-    large: string
+}
+
+interface CryptoAssets {
+  id: string
+  name: string
+  image: string
+  current_price: number
+  sparkline_in_7d: {
+    price: number[]
   }
-  market_data: {
-    current_price: {
-      usd: number
-      eur: number
-      jpy: number
-    }
-  }
+
 }
 
 // Reactive variables
 const cryptoType = ref('bitcoin') // Default cryptocurrency
-const cryptoData = ref<CryptoCurrency | null>(null) // To store the fetched cryptocurrency prices
+const cryptoCoin = ref<CryptoAssets[] | null>(null) // To store the fetched cryptocurrency assets
+const cryptoCurrency = ref<CryptoCurrency | null>(null) // To store the fetched cryptocurrency prices
 const cryptoInfos = ref<CryptoInfos | null>(null) // To store the fetched cryptocurrency information
 const error = ref<string | null>(null) // To store any error messages
+const generalData = ref([]) // To store general data for the table
 
 // Table data
 const columns = ref([
@@ -54,12 +57,12 @@ const fetchCryptoData = async () => {
     console.log('Fetched data:', data.value)
 
     // Extract the data for the selected cryptocurrency
-    cryptoData.value = data.value?.[cryptoType.value] || null
+    cryptoCurrency.value = data.value?.[cryptoType.value] || null
 
     // Update the products array for the table
-    if (cryptoData.value) {
+    if (cryptoCurrency.value) {
       products.value = []
-      for (const [currency, price] of Object.entries(cryptoData.value)) {
+      for (const [currency, price] of Object.entries(cryptoCurrency.value)) {
         products.value.push({ currency, price })
       }
     }
@@ -69,18 +72,40 @@ const fetchCryptoData = async () => {
   }
 }
 
-// Fetch cryptocurrency information
+// Fetch cryptocurrency description
 const fetchCryptoInfosData = async () => {
   try {
-    console.log('Fetching data infos for crypto:', cryptoType.value)
+    console.log('Fetching description for crypto:', cryptoType.value)
     const { data } = await useFetch<CryptoInfos>(`/api/infos/${cryptoType.value}`)
     console.log('Fetched data infos:', data.value)
 
-    // Extract data infos for the selected cryptocurrency
+    // Extract data description for the selected cryptocurrency
     cryptoInfos.value = data.value || null
   } catch (err) {
     error.value = (err as Error).message
-    console.error('An error occurred while fetching crypto infos:', err)
+    console.error('An error occurred while fetching crypto description:', err)
+  }
+}
+
+// Fetch crypto coin infos
+const fetchCryptoCoinAssets = async () => {
+  try {
+    console.log('Fetching crypto coin assets:', cryptoType.value)
+    const { data } = await useFetch<CryptoAssets[]>('/api/coins')
+    console.log('Fetched data coin assets:', data.value)
+
+    // Extract coins assets data for the selected cryptocurrency
+    generalData.value = []
+    generalData = ref([])
+    // Populate the generalData array for the new table
+    generalData.value = cryptoCoin.value.map(asset => ({
+      name: asset.name,
+      current_price: asset.current_price
+    })
+    )
+  } catch (e) {
+    error.value = (e as Error).message
+    console.error('An error occured while fetching crypto assets : ', e)
   }
 }
 
@@ -88,12 +113,14 @@ const fetchCryptoInfosData = async () => {
 const onCryptoChange = () => {
   fetchCryptoData()
   fetchCryptoInfosData()
+  fetchCryptoCoinAssets()
 }
 
 // Fetch data when the component is mounted
 onMounted(() => {
   fetchCryptoData()
   fetchCryptoInfosData()
+  fetchCryptoCoinAssets()
 })
 </script>
 
@@ -101,12 +128,20 @@ onMounted(() => {
   <div>
     <h1>Cryptocurrency Prices</h1>
 
+    <!-- Display table regrouping all cryptocurrency -->
+    <div v-if="cryptoCoin">
+      <h2>Cryptocurrency Assets</h2>
+      <DataTable :value="products" striped-rows table-style="min-width: 50rem">
+          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
+      </DataTable>
+    </div>
+
     <!-- Dropdown to select cryptocurrency -->
     <div>
       <label for="cryptoType">Select Cryptocurrency:</label>
       <select id="cryptoType" v-model="cryptoType" @change="onCryptoChange">
-        <option value="bitcoin">Bitcoin</option>
-        <option value="ethereum">Ethereum</option>
+        <option v-for="asset in cryptoCoin || []" :key="asset.id" :value="asset.id">{{ asset.name }}
+        </option>
       </select>
     </div>
 
@@ -123,34 +158,57 @@ onMounted(() => {
     </div>
 
     <!-- Display the cryptocurrency data if available -->
-    <div v-if="cryptoData && cryptoData.usd && cryptoData.eur">
+    <div v-if="cryptoCurrency && cryptoCurrency.usd && cryptoCurrency.eur">
       <div>
         <h2>Prices for {{ cryptoType }}</h2>
-        <DataTable :value="products" striped-rows table-style="min-width: 50rem">
-          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
+        <DataTable :value="generalData" striped-rows table-style="min-width: 50rem">
+          <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header" />
         </DataTable>
       </div>
       <div>
-        <Chart type="bar"
-               :data="{
-                 labels: ['USD', 'EUR'],
-                 datasets: [
-                   {
-                     label: 'Price',
-                     data: [cryptoData.usd, cryptoData.eur],
-                     backgroundColor: ['#42A5F5', '#66BB6A'],
-                     borderColor: '#42A5F5',
-                     borderWidth: 1,
-                   },
-                 ],
-               }"
-               :options="{
-                 scales: {
-                   y: { beginAtZero: true,
-                        ticks: { stepSize: 200 }
-                   }
-                 }
-               }"
+        <Chart
+          type="line"
+          :data="{
+            labels: cryptoCoin && cryptoCoin.length > 0
+              ? cryptoCoin.find(asset => asset.id === cryptoType)?.sparkline_in_7d.price.map((_, index) => `Day ${index + 1}`) || []
+              : [],
+            datasets: [
+              {
+                label: 'Price Evolution',
+                data: cryptoCoin && cryptoCoin.length > 0
+                  ? cryptoCoin.find(asset => asset.id === cryptoType)?.sparkline_in_7d.price || []
+                  : [],
+                backgroundColor: 'rgba(66, 165, 245, 0.2)',
+                borderColor: '#42A5F5',
+                borderWidth: 2,
+                fill: true,
+              },
+            ],
+          }"
+          :options="{
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Days',
+                },
+              },
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Price (EUR)',
+                },
+              },
+            },
+          }"
         /> <br />
       </div>
     </div>
