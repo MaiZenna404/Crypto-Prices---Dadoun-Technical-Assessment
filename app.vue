@@ -5,6 +5,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Chart from 'primevue/chart'
+import 'primeicons/primeicons.css'
 
 // Define the structure of the API response
 interface CryptoCurrency {
@@ -60,7 +61,7 @@ const generalData = ref([])
 const dataTable = ref(null)
 
 const exportToCSV = () => {
-  console.log('General Data:', generalData.value) // Debug log
+  // console.log('General Data:', generalData.value) // Debug log
   if (dataTable.value) {
     dataTable.value.exportCSV()
   }
@@ -83,7 +84,7 @@ const fetchCryptoData = async () => {
         products.value.push({ currency, price })
       }
     }
-    console.log('Product Array :', products.value)
+    // console.log('Product Array :', products.value)
   } catch (err) {
     error.value = (err as Error).message
     // console.error('An error occurred while fetching crypto prices:', err)
@@ -108,13 +109,13 @@ const fetchCryptoInfosData = async () => {
 // Fetch crypto coin infos
 const fetchCryptoCoinAssets = async () => {
   try {
-    console.log('Fetching crypto coin assets:', cryptoType.value)
+    // console.log('Fetching crypto coin assets:', cryptoType.value)
     const { data } = await useFetch<CryptoAssets[]>('/api/coins')
-    console.log('Fetched data coin assets:', data.value)
+    // console.log('Fetched data coin assets:', data.value)
 
     // Ensure the response is an array
     cryptoCoin.value = Array.isArray(data.value) ? data.value : []
-    console.log('Crypto Coin Array :', cryptoCoin.value) // debug
+    // console.log('Crypto Coin Array :', cryptoCoin.value) // debug
     // Extract the data for the selected cryptocurrency
     // cryptoCoin.value = data.value || []
     // Populate the generalData array for the new table
@@ -126,7 +127,7 @@ const fetchCryptoCoinAssets = async () => {
     )
   } catch (e) {
     error.value = (e as Error).message
-    console.error('An error occured while fetching crypto assets : ', e)
+    // console.error('An error occured while fetching crypto assets : ', e)
   }
 }
 
@@ -149,11 +150,15 @@ onMounted(() => {
 <template>
   <div>
     <nav class="bg-emerald-700 p-6 rounded-br-lg rounded-bl-lg">
-      <h1 class="text-4xl">Cryptocurrency Prices</h1>
+      <h1 class="text-4xl text-center">Cryptocurrency Prices</h1>
     </nav>
     <!-- Display table regrouping all cryptocurrency -->
-    <div v-if="cryptoCoin">
-      <h2 class="text-3xl"> All Cryptocurrency Assets </h2>
+    <div v-if="cryptoCoin" class="w-full">
+      <Card class="shadow-lg rounded-lg p-6">
+        <template #title>
+          <h2 class="text-2xl p-10">All Cryptocurrency Current Price (in Eur)</h2>
+        </template>
+      </Card>
       <br></br>
       <DataTable ref="dataTable"
                  paginator
@@ -180,21 +185,34 @@ onMounted(() => {
     </div>
 
     <!-- Dropdown to select cryptocurrency -->
-    <div>
-      <label for="cryptoType">Select Cryptocurrency:</label>
-      <select id="cryptoType" v-model="cryptoType" @change="onCryptoChange">
-        <option v-for="asset in cryptoCoin || []" :key="asset.id" :value="asset.id">{{ asset.name }}
-        </option>
-      </select>
-    </div>
+    <Card class="shadow-lg rounded-lg p-6">
+      <template #title>
+        <div>
+          <label for="cryptoType">Select Cryptocurrency :</label>
+          <select id="cryptoType" v-model="cryptoType" @change="onCryptoChange" class="rounded-md ml-8">
+            <option v-for="asset in cryptoCoin || []" :key="asset.id" :value="asset.id">{{ asset.name }}
+            </option>
+          </select>
+        </div>
+      </template>
+    </Card>
 
     <!-- Display the cryptocurrency infos if available -->
     <div v-if="cryptoInfos">
-      <div>
-        <h2>{{ cryptoInfos.name }}</h2>
-        <img :src="cryptoInfos.image.small" alt="Crypto Image" />
-        <p>{{ cryptoInfos.description.en }}</p>
-      </div>
+      <Card class="shadow-lg rounded-lg p-6">
+        <template #title>
+          <div class="flex items-center space-x-4">
+            <img :src="cryptoInfos.image.small" alt="Crypto Image" class="w-10 h-10 rounded-full" />
+            <h2 class="text-xl font-bold">{{ cryptoInfos.name }}</h2>
+          </div>
+        </template>
+
+        <template #content>
+          <p class="text-gray-600 text-justify">
+            {{ cryptoInfos.description.en }}
+          </p>
+        </template>
+      </Card>
     </div>
 
     <!-- Display error message if an error occurs -->
@@ -203,66 +221,84 @@ onMounted(() => {
     </div>
 
     <!-- Display the cryptocurrency data if available -->
-    <div v-if="cryptoCurrency && cryptoCurrency.usd && cryptoCurrency.eur">
-      <div>
-        <h2>Prices for {{ cryptoType }}</h2>
-        <DataTable :value="products" striped-rows table-style="min-width: 50rem">
-          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
-        </DataTable>
-      </div>
-      <div>
-        <Chart
-          type="line"
-          :data="{
-            labels: cryptoCoin && cryptoCoin.length > 0
-              ? cryptoCoin.find(asset => asset.id === cryptoType)?.sparkline_in_7d.price.map((_, index) => `Day ${index + 1}`) || []
-              : [],
-            datasets: [
-              {
-                label: 'Price Evolution',
-                data: cryptoCoin && cryptoCoin.length > 0
-                  ? cryptoCoin.find(asset => asset.id === cryptoType)?.sparkline_in_7d.price || []
+    <div v-if="cryptoCurrency && cryptoCurrency.usd && cryptoCurrency.eur" class="mt-6">
+      <div class="flex flex-row space-x-6">
+        <!-- Table Section -->
+        <div class="flex-1">
+          <Card>
+            <template #title>
+              <h2>Prices for {{ cryptoType }}</h2>
+            </template>
+          </Card>
+            <DataTable :value="products" striped-rows table-style="min-width: 100%">
+              <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
+            </DataTable>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="flex-1">
+          <Card>
+            <template #title>
+              <h2>Evolution of {{ cryptoType }}'s Value</h2>
+            </template>
+          </Card>
+            <Chart
+              type="line"
+              :data="{
+                labels: cryptoCoin && cryptoCoin.length > 0
+                  ? cryptoCoin.find(asset => asset.id === cryptoType)?.sparkline_in_7d.price.map((_, index) => `Day ${index + 1}`) || []
                   : [],
-                backgroundColor: 'rgba(66, 165, 245, 0.2)',
-                borderColor: '#42A5F5',
-                borderWidth: 2,
-                fill: true,
-              },
-            ],
-          }"
-          :options="{
-            responsive: true,
-            plugins: {
-              legend: {
-                display: true,
-                position: 'top',
-              },
-            },
-            scales: {
-              x: {
-                title: {
-                  display: true,
-                  text: 'Days',
+                datasets: [
+                  {
+                    label: 'Price Evolution',
+                    data: cryptoCoin && cryptoCoin.length > 0
+                      ? cryptoCoin.find(asset => asset.id === cryptoType)?.sparkline_in_7d.price || []
+                      : [],
+                    backgroundColor: 'rgba(66, 165, 245, 0.2)',
+                    borderColor: '#42A5F5',
+                    borderWidth: 2,
+                    fill: true,
+                  },
+                ],
+              }"
+              :options="{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top',
+                  },
                 },
-              },
-              y: {
-                beginAtZero: false,
-                title: {
-                  display: true,
-                  text: 'Price (EUR)',
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: 'Days',
+                    },
+                  },
+                  y: {
+                    beginAtZero: false,
+                    title: {
+                      display: true,
+                      text: 'Price (EUR)',
+                    },
+                  },
                 },
-              },
-            },
-          }"
-        /> <br />
+              }"
+            />
+        </div>
       </div>
     </div>
-
     <!-- Show a message if no data is found -->
     <div v-else>
       <p>No data available for the selected cryptocurrency.</p>
     </div>
-    <Button label="Verify" />
+
+    <!-- Footer -->
+    <footer class="bg-emerald-700/45 p-6 rounded-tr-lg rounded-tl-lg">
+      <p class="text-center mb-2 mt-4">Made by Mai with ❣️</p>
+      <p class="text-center mb-4">Project made for Dadoun's Technical Assessment</p>
+    </footer>
   </div>
 </template>
 
