@@ -35,11 +35,10 @@ interface CryptoAssets {
 
 // Reactive variables
 const cryptoType = ref('bitcoin') // Default cryptocurrency
-const cryptoCoin = ref<CryptoAssets[] | null>(null) // To store the fetched cryptocurrency assets
+const cryptoCoin = ref<CryptoAssets[]>([]) // To store the fetched cryptocurrency assets
 const cryptoCurrency = ref<CryptoCurrency | null>(null) // To store the fetched cryptocurrency prices
 const cryptoInfos = ref<CryptoInfos | null>(null) // To store the fetched cryptocurrency information
 const error = ref<string | null>(null) // To store any error messages
-const generalData = ref([]) // To store general data for the table
 
 // Table data
 const columns = ref([
@@ -47,14 +46,21 @@ const columns = ref([
   { field: 'price', header: 'Price' }
 ])
 
+const columns1 = ref([
+  { field: 'image', header: 'Crypto Icon' },
+  { field: 'name', header: 'Crypto Name' },
+  { field: 'current_price', header: 'Current Price (EUR)' }
+])
+
 const products = ref([])
+const generalData = ref([])
 
 // Fetch cryptocurrency prices
 const fetchCryptoData = async () => {
   try {
-    console.log('Fetching data for crypto:', cryptoType.value)
+    // console.log('Fetching data for crypto:', cryptoType.value)
     const { data } = await useFetch<Record<string, CryptoCurrency>>(`/api/${cryptoType.value}`)
-    console.log('Fetched data:', data.value)
+    // console.log('Fetched data:', data.value)
 
     // Extract the data for the selected cryptocurrency
     cryptoCurrency.value = data.value?.[cryptoType.value] || null
@@ -66,24 +72,25 @@ const fetchCryptoData = async () => {
         products.value.push({ currency, price })
       }
     }
+    console.log('Product Array :', products.value)
   } catch (err) {
     error.value = (err as Error).message
-    console.error('An error occurred while fetching crypto prices:', err)
+    // console.error('An error occurred while fetching crypto prices:', err)
   }
 }
 
 // Fetch cryptocurrency description
 const fetchCryptoInfosData = async () => {
   try {
-    console.log('Fetching description for crypto:', cryptoType.value)
+    // console.log('Fetching description for crypto:', cryptoType.value)
     const { data } = await useFetch<CryptoInfos>(`/api/infos/${cryptoType.value}`)
-    console.log('Fetched data infos:', data.value)
+    // console.log('Fetched data infos:', data.value)
 
     // Extract data description for the selected cryptocurrency
     cryptoInfos.value = data.value || null
   } catch (err) {
     error.value = (err as Error).message
-    console.error('An error occurred while fetching crypto description:', err)
+    // console.error('An error occurred while fetching crypto description:', err)
   }
 }
 
@@ -94,13 +101,16 @@ const fetchCryptoCoinAssets = async () => {
     const { data } = await useFetch<CryptoAssets[]>('/api/coins')
     console.log('Fetched data coin assets:', data.value)
 
-    // Extract coins assets data for the selected cryptocurrency
-    generalData.value = []
-    generalData = ref([])
+    // Ensure the response is an array
+    cryptoCoin.value = Array.isArray(data.value) ? data.value : []
+    console.log('Crypto Coin Array :', cryptoCoin.value) // debug
+    // Extract the data for the selected cryptocurrency
+    // cryptoCoin.value = data.value || []
     // Populate the generalData array for the new table
     generalData.value = cryptoCoin.value.map(asset => ({
       name: asset.name,
-      current_price: asset.current_price
+      current_price: asset.current_price,
+      image: asset.image
     })
     )
   } catch (e) {
@@ -130,9 +140,9 @@ onMounted(() => {
 
     <!-- Display table regrouping all cryptocurrency -->
     <div v-if="cryptoCoin">
-      <h2>Cryptocurrency Assets</h2>
-      <DataTable :value="products" striped-rows table-style="min-width: 50rem">
-          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
+      <h2 class="text-3xl">All Cryptocurrency Assets</h2>
+      <DataTable :value="generalData" striped-rows table-style="min-width: 50rem">
+        <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header" />
       </DataTable>
     </div>
 
@@ -161,8 +171,8 @@ onMounted(() => {
     <div v-if="cryptoCurrency && cryptoCurrency.usd && cryptoCurrency.eur">
       <div>
         <h2>Prices for {{ cryptoType }}</h2>
-        <DataTable :value="generalData" striped-rows table-style="min-width: 50rem">
-          <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header" />
+        <DataTable :value="products" striped-rows table-style="min-width: 50rem">
+          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" />
         </DataTable>
       </div>
       <div>

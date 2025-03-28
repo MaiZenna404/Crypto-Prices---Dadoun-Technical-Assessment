@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     })
     // PARSE Json response
     const data = await response.json()
-    console.log('raw data :', data) // debug
+    // console.log('raw data :', data) // debug
     return data
   } catch (e) {
     console.error('Error :', e)
