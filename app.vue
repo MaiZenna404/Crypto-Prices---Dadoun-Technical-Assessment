@@ -40,7 +40,7 @@ const cryptoCurrency = ref<CryptoCurrency | null>(null) // To store the fetched 
 const cryptoInfos = ref<CryptoInfos | null>(null) // To store the fetched cryptocurrency information
 const error = ref<string | null>(null) // To store any error messages
 
-// Table data
+// Table data fields and header
 const columns = ref([
   { field: 'currency', header: 'Currency' },
   { field: 'price', header: 'Price' }
@@ -54,6 +54,17 @@ const columns1 = ref([
 
 const products = ref([])
 const generalData = ref([])
+
+// Table Data for the CSV importation
+
+const dataTable = ref(null)
+
+const exportToCSV = () => {
+  console.log('General Data:', generalData.value) // Debug log
+  if (dataTable.value) {
+    dataTable.value.exportCSV()
+  }
+}
 
 // Fetch cryptocurrency prices
 const fetchCryptoData = async () => {
@@ -137,13 +148,24 @@ onMounted(() => {
 <!-- Start of the View -->
 <template>
   <div>
-    <h1>Cryptocurrency Prices</h1>
-
+    <nav class="bg-emerald-700 p-6 rounded-br-lg rounded-bl-lg">
+      <h1 class="text-4xl">Cryptocurrency Prices</h1>
+    </nav>
     <!-- Display table regrouping all cryptocurrency -->
     <div v-if="cryptoCoin">
       <h2 class="text-3xl"> All Cryptocurrency Assets </h2>
       <br></br>
-      <DataTable paginator :rows="5" :value="generalData" striped-rows table-style="min-width: 50rem">
+      <DataTable ref="dataTable"
+                 paginator
+                 :rows="5"
+                 :value="generalData"
+                 striped-rows
+                 table-style="min-width: 50rem">
+      <template #header>
+        <div class="text-end pb-4">
+          <Button icon="pi pi-external-link" label="Export to CSV" @click="exportToCSV()" />
+        </div>
+      </template>
         <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header" sortable>
           <!-- Custom template for the image field -->
           <template v-if="col.field === 'image'" #body="slotProps">
@@ -168,7 +190,7 @@ onMounted(() => {
 
     <!-- Display the cryptocurrency infos if available -->
     <div v-if="cryptoInfos">
-      <div >
+      <div>
         <h2>{{ cryptoInfos.name }}</h2>
         <img :src="cryptoInfos.image.small" alt="Crypto Image" />
         <p>{{ cryptoInfos.description.en }}</p>
