@@ -142,7 +142,16 @@ onMounted(() => {
     <div v-if="cryptoCoin">
       <h2 class="text-3xl">All Cryptocurrency Assets</h2>
       <DataTable :value="generalData" striped-rows table-style="min-width: 50rem">
-        <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header" />
+        <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header">
+          <!-- Custom template for the image field -->
+          <template v-if="col.field === 'image'" #body="slotProps">
+            <img :src="slotProps.data.image" alt="Crypto Icon" style="width: 30px; height: 30px;" />
+          </template>
+          <!-- Default rendering for other fields -->
+          <template v-else #body="slotProps">
+            {{ slotProps.data[col.field] }}
+          </template>
+        </Column>
       </DataTable>
     </div>
 
