@@ -134,15 +134,17 @@ onMounted(() => {
 })
 </script>
 
+<!-- Start of the View -->
 <template>
   <div>
     <h1>Cryptocurrency Prices</h1>
 
     <!-- Display table regrouping all cryptocurrency -->
     <div v-if="cryptoCoin">
-      <h2 class="text-3xl">All Cryptocurrency Assets</h2>
-      <DataTable :value="generalData" striped-rows table-style="min-width: 50rem">
-        <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header">
+      <h2 class="text-3xl"> All Cryptocurrency Assets </h2>
+      <br></br>
+      <DataTable paginator :rows="5" :value="generalData" striped-rows table-style="min-width: 50rem">
+        <Column v-for="col in columns1" :key="col.field" :field="col.field" :header="col.header" sortable>
           <!-- Custom template for the image field -->
           <template v-if="col.field === 'image'" #body="slotProps">
             <img :src="slotProps.data.image" alt="Crypto Icon" style="width: 30px; height: 30px;" />
@@ -166,9 +168,11 @@ onMounted(() => {
 
     <!-- Display the cryptocurrency infos if available -->
     <div v-if="cryptoInfos">
-      <h2>{{ cryptoInfos.name }}</h2>
-      <img :src="cryptoInfos.image.small" alt="Crypto Image" />
-      <p>{{ cryptoInfos.description.en }}</p>
+      <div >
+        <h2>{{ cryptoInfos.name }}</h2>
+        <img :src="cryptoInfos.image.small" alt="Crypto Image" />
+        <p>{{ cryptoInfos.description.en }}</p>
+      </div>
     </div>
 
     <!-- Display error message if an error occurs -->
@@ -240,27 +244,7 @@ onMounted(() => {
   </div>
 </template>
 
+<!-- End of the View -->
+
 <style scoped>
-/* Add some basic styling */
-h1 {
-  text-align: center
-}
-
-label {
-  font-weight: bold
-}
-
-select {
-  margin: 10px 0;
-  padding: 5px
-}
-
-ul {
-  list-style-type: none;
-  padding: 0
-}
-
-li {
-  margin: 5px 0
-}
 </style>
