@@ -4,7 +4,7 @@ import { fetch } from 'ofetch'
 export default defineEventHandler(async (event) => {
   // Retrieve the 'crypto' parameter from the route
   const cryptoCurrency = event.context.params?.crypto
-  console.log('crypto:', cryptoCurrency)
+  // console.log('crypto:', cryptoCurrency)
 
   if (!cryptoCurrency) {
     throw createError({
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     // console.log('raw data :', data) // debug
     return data
   } catch (e) {
-    console.error('Error :', e)
+    // console.error('Error :', e)
     throw createError({
       statusCode: 500,
       message: 'An error happened, no data fetched'

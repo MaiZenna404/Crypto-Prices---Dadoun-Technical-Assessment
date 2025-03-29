@@ -17,7 +17,7 @@ export default defineEventHandler(async (_event) => {
     // console.log('raw data :', data) // debug
     return data
   } catch (e) {
-    console.error('Error :', e)
+    // console.error('Error :', e)
     throw createError({
       statusCode: 500,
       message: 'An error happened, no data fetched'
