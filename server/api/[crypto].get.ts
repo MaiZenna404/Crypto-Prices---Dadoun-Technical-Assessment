@@ -21,9 +21,11 @@ export default defineEventHandler(async (event) => {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        'x-cg-demo-api-key': 'CG-8BaVmmitoF3s3zqRyafs34r7'
+        // Expression conditionnelle qui ajoute l'API Key si elle est présente dans le .env
+        ...(process.env.API_KEY && { 'x-cg-demo-api-key': process.env.API_KEY })
       }
     })
+    // console.log('API Key :', process.env.API_KEY)
     // PARSE Json response
     const data = await response.json()
     // console.log('raw data :', data) // debug
